@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>🍁 Père Noël Canadien — La roue</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍁%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0b1d3a; --bg2:#12315e; --ink:#f4f8ff; --muted:#9fb3d1;
+    --red:#e63946; --green:#2a9d8f; --gold:#ffd166; --ice:#a8dadc;
+    --glass:rgba(255,255,255,.07); --glass-b:rgba(255,255,255,.16);
+    --radius:20px; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:'Fredoka',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    color:var(--ink); background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 55%,var(--bg1) 100%);
+    background-attachment:fixed; min-height:100dvh; overflow-x:hidden;
+  }
+  #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:5}
+  .wrap{max-width:760px; margin:0 auto; padding:16px 16px 90px; position:relative; z-index:10}
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    padding:10px 14px; border-radius:var(--radius);
+    background:var(--glass); border:1px solid var(--glass-b); backdrop-filter:blur(10px);
+    position:sticky; top:10px; z-index:20; box-shadow:var(--shadow);
+  }
+  header .logo{font-size:22px; font-weight:700; letter-spacing:.3px; display:flex; align-items:center; gap:8px}
+  header .logo small{display:block; font-size:11px; font-weight:500; color:var(--muted); letter-spacing:.6px}
+  .spacer{flex:1}
+  .badge-role{
+    font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px;
+    background:rgba(230,57,70,.18); border:1px solid rgba(230,57,70,.5); color:#ffb3b9;
+  }
+  .badge-role.admin{background:rgba(255,209,102,.15); border-color:rgba(255,209,102,.5); color:var(--gold)}
+  .icon-btn{
+    width:38px; height:38px; border-radius:12px; display:grid; place-items:center; cursor:pointer;
+    background:rgba(255,255,255,.08); border:1px solid var(--glass-b); color:var(--ink);
+    font-size:17px; transition:transform .15s, background .15s; user-select:none;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,.16)} .icon-btn:active{transform:scale(.92)}
+  .a-sheet{font-size:13px; color:var(--ice); text-decoration:none; padding:6px 10px; border-radius:10px; border:1px solid rgba(168,218,220,.35)}
+  .a-sheet:hover{background:rgba(168,218,220,.12)}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--glass); border:1px solid var(--glass-b); border-radius:var(--radius);
+    padding:20px; margin-top:16px; box-shadow:var(--shadow); backdrop-filter:blur(10px);
+    animation:pop .35s ease both;
+  }
+  @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.98)} to{opacity:1; transform:none}}
+  h1{font-size:clamp(26px,6vw,40px); margin:0; text-align:center; line-height:1.15}
+  h1 .sub{display:block; font-size:clamp(13px,3vw,16px); font-weight:500; color:var(--muted); margin-top:6px}
+  h2{font-size:18px; margin:0 0 12px; display:flex; align-items:center; gap:8px}
+  .hint{color:var(--muted); font-size:13px; line-height:1.5}
+
+  /* ---------- Forms & buttons ---------- */
+  input,select{
+    width:100%; padding:13px 14px; border-radius:14px; font-size:16px; font-family:inherit;
+    background:rgba(0,0,0,.25); border:1px solid var(--glass-b); color:var(--ink); outline:none;
+    transition:border .15s, box-shadow .15s;
+  }
+  input:focus,select:focus{border-color:var(--gold); box-shadow:0 0 0 3px rgba(255,209,102,.2)}
+  select option{background:#123156; color:var(--ink)}
+  label.f{display:block; font-size:13px; font-weight:600; color:var(--muted); margin:12px 0 6px}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    border:none; border-radius:14px; padding:13px 20px; font:inherit; font-size:16px; font-weight:600;
+    color:#1a1a2e; background:var(--gold); box-shadow:0 6px 0 #b98a2e, 0 10px 18px rgba(0,0,0,.3);
+    transition:transform .1s, box-shadow .1s, filter .15s; user-select:none; width:100%;
+  }
+  .btn:hover{filter:brightness(1.06)} .btn:active{transform:translateY(4px); box-shadow:0 2px 0 #b98a2e}
+  .btn:disabled{opacity:.55; cursor:not-allowed; transform:none; box-shadow:0 6px 0 #b98a2e}
+  .btn.green{background:#7be0a2; box-shadow:0 6px 0 #2f9e63,0 10px 18px rgba(0,0,0,.3)}
+  .btn.green:active{box-shadow:0 2px 0 #2f9e63}
+  .btn.red{background:#ff7b83; box-shadow:0 6px 0 #b0323c,0 10px 18px rgba(0,0,0,.3)}
+  .btn.red:active{box-shadow:0 2px 0 #b0323c}
+  .btn.ghost{background:rgba(255,255,255,.1); color:var(--ink); box-shadow:none; border:1px solid var(--glass-b)}
+  .btn.ghost:active{transform:scale(.97)}
+  .btn.small{padding:8px 14px; font-size:14px; border-radius:11px; width:auto}
+  .row{display:flex; gap:10px; flex-wrap:wrap} .row>*{flex:1; min-width:130px}
+  .checkline{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--muted); margin-top:10px; cursor:pointer}
+  .checkline input{width:18px; height:18px; accent-color:var(--gold)}
+
+  /* ---------- Grille de prénoms (login) ---------- */
+  .name-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin-top:4px}
+  .name-btn{
+    display:flex; flex-direction:column; align-items:center; gap:5px; padding:14px 8px 12px;
+    border-radius:16px; border:1px solid var(--glass-b); background:rgba(255,255,255,.07);
+    color:var(--ink); font:inherit; font-size:15px; font-weight:600; cursor:pointer;
+    transition:transform .12s, background .15s, border-color .15s; text-align:center;
+  }
+  .name-btn .av{font-size:26px; line-height:1}
+  .name-btn:hover{background:rgba(255,255,255,.14); border-color:rgba(255,209,102,.5)}
+  .name-btn:active{transform:scale(.94)}
+  .name-btn.confirm{border-color:var(--gold); background:rgba(255,209,102,.15); animation:pop .25s ease both}
+
+  /* ---------- Screens ---------- */
+  .screen{display:none} .screen.on{display:block}
+  .hero{text-align:center; padding:26px 8px 6px}
+  .hero .flake{font-size:44px; display:block; animation:bob 3s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-6deg)} 50%{transform:translateY(-8px) rotate(6deg)}}
+
+  /* ---------- Wheel ---------- */
+  .wheel-zone{display:grid; place-items:center; gap:14px; padding:8px 0}
+  .wheel-box{position:relative; width:min(88vw,380px); aspect-ratio:1}
+  .wheel-box .hub{
+    position:absolute; inset:0; margin:auto; width:74px; height:74px; border-radius:50%; z-index:3;
+    background:radial-gradient(circle at 30% 30%,#fff6d8,#ffd166 60%,#c8963e);
+    display:grid; place-items:center; font-size:34px; box-shadow:0 4px 14px rgba(0,0,0,.45), inset 0 -3px 8px rgba(0,0,0,.2);
+    pointer-events:none;
+  }
+  .pointer{
+    position:absolute; top:-14px; left:50%; transform:translateX(-50%); z-index:4;
+    width:0; height:0; border-left:16px solid transparent; border-right:16px solid transparent;
+    border-top:30px solid var(--red); filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));
+  }
+  .pointer::after{content:""; position:absolute; top:-30px; left:-7px; width:14px; height:14px; border-radius:50%; background:#fff}
+  #wheel{width:100%; height:100%; display:block; filter:drop-shadow(0 14px 24px rgba(0,0,0,.45))}
+  .shake{animation:shake .5s} @keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-2deg)}40%{transform:rotate(2deg)}60%{transform:rotate(-1.5deg)}80%{transform:rotate(1.5deg)}}
+  .progress-line{height:8px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; margin-top:10px}
+  .progress-line i{display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--green),var(--gold)); transition:width .5s}
+
+  /* ---------- Lists / tables ---------- */
+  .chip{
+    display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:999px;
+    background:rgba(255,255,255,.08); border:1px solid var(--glass-b); font-size:14px; margin:4px 4px 0 0;
+  }
+  .chip .x{cursor:pointer; opacity:.7; font-weight:700} .chip .x:hover{opacity:1; color:var(--red)}
+  .chip.pending{opacity:.5; font-style:italic}
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  th{color:var(--muted); font-weight:600; text-align:left; padding:8px 6px; border-bottom:1px solid var(--glass-b); font-size:12px; text-transform:uppercase; letter-spacing:.5px}
+  td{padding:9px 6px; border-bottom:1px solid rgba(255,255,255,.06)}
+  tr:last-child td{border-bottom:none}
+  td .who{font-weight:600} td .gift{color:var(--gold); font-weight:600}
+  .pill{font-size:11px; font-weight:700; padding:2px 9px; border-radius:99px; background:rgba(42,157,143,.2); color:#8fe3d4; border:1px solid rgba(42,157,143,.4)}
+  .pill.admin{background:rgba(255,209,102,.15); color:var(--gold); border-color:rgba(255,209,102,.4)}
+  .warnbox{
+    margin-top:12px; padding:12px 14px; border-radius:14px; font-size:14px; line-height:1.45;
+    background:rgba(230,57,70,.12); border:1px solid rgba(230,57,70,.4); color:#ffc2c6;
+  }
+  .okbox{background:rgba(42,157,143,.12); border:1px solid rgba(42,157,143,.4); color:#a9e8dc}
+
+  /* ---------- Toasts & modal ---------- */
+  #toasts{position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:60; display:grid; gap:8px; width:min(92vw,420px)}
+  .toast{
+    background:#1c2f52; border:1px solid var(--glass-b); border-radius:14px; padding:12px 16px;
+    font-size:14px; box-shadow:var(--shadow); animation:pop .25s ease both; display:flex; gap:8px; align-items:center;
+  }
+  .toast.err{border-color:rgba(230,57,70,.6); background:#3a1a24}
+  .modal-ov{position:fixed; inset:0; background:rgba(4,10,25,.75); backdrop-filter:blur(6px); z-index:50; display:grid; place-items:center; padding:16px; animation:pop .25s ease both}
+  .modal{
+    background:linear-gradient(180deg,#17325f,#0e2247); border:1px solid rgba(255,255,255,.2);
+    border-radius:26px; padding:30px 24px; max-width:440px; width:100%; text-align:center; box-shadow:var(--shadow);
+  }
+  .modal .big{font-size:60px; line-height:1; animation:bob 2.5s ease-in-out infinite; display:block}
+  .modal .kicker{color:var(--muted); font-size:14px; margin-top:10px; letter-spacing:1px; text-transform:uppercase}
+  .modal .name{
+    font-size:clamp(30px,8vw,44px); font-weight:700; margin:6px 0 4px;
+    background:linear-gradient(90deg,var(--gold),#fff,var(--gold)); background-size:200%;
+    -webkit-background-clip:text; background-clip:text; color:transparent; animation:shine 3s linear infinite;
+  }
+  @keyframes shine{to{background-position:200%}}
+  .modal .phrase{color:var(--ice); font-size:15px; font-style:italic; margin-top:6px}
+
+  /* ---------- Skeleton ---------- */
+  .sk{border-radius:12px; background:linear-gradient(90deg,rgba(255,255,255,.06) 25%,rgba(255,255,255,.14) 37%,rgba(255,255,255,.06) 63%); background-size:400% 100%; animation:sk 1.2s infinite}
+  @keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+  .sk.t{height:16px; margin:8px 0} .sk.b{height:44px; margin:10px 0}
+
+  details.sec{border:1px solid var(--glass-b); border-radius:16px; padding:0; margin-top:14px; background:rgba(0,0,0,.12); overflow:hidden}
+  details.sec summary{cursor:pointer; padding:14px 16px; font-weight:600; font-size:15px; list-style:none; display:flex; align-items:center; gap:8px; user-select:none}
+  details.sec summary::-webkit-details-marker{display:none}
+  details.sec summary::after{content:"▾"; margin-left:auto; transition:transform .2s; color:var(--muted)}
+  details.sec[open] summary::after{transform:rotate(180deg)}
+  details.sec .body{padding:4px 16px 16px}
+  .divider{height:1px; background:var(--glass-b); margin:14px 0}
+  footer{text-align:center; color:var(--muted); font-size:12px; margin-top:26px; line-height:1.6}
+  @media (max-width:480px){
+    header{top:6px} .wrap{padding:12px 12px 80px}
+    .card{padding:16px} h2{font-size:16px}
+    td,th{padding:7px 4px} table{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div id="toasts"></div>
+
+<div class="wrap">
+  <header id="topbar" style="display:none">
+    <div class="logo">🍁<div>PN Canadien<small>la roue du Père Noël</small></div></div>
+    <div class="spacer"></div>
+    <span id="roleBadge" class="badge-role" style="display:none"></span>
+    <a id="sheetLink" class="a-sheet" style="display:none" target="_blank" rel="noopener">📊 Sheet</a>
+    <div class="icon-btn" id="btnSound" title="Son">🔊</div>
+    <div class="icon-btn" id="btnCfg" title="Serveur">⚙️</div>
+    <div class="icon-btn" id="btnOut" title="Changer de joueur">🚪</div>
+  </header>
+
+  <!-- ============ LOGIN ============ -->
+  <section id="scr-login" class="screen">
+    <div class="hero">
+      <span class="flake">🎅</span>
+      <h1>Père Noël Canadien<span class="sub">La roue décide qui offre à qui, mon chum ! 🍁</span></h1>
+    </div>
+    <div class="card">
+      <label class="f" style="text-align:center; font-size:15px">C'est qui, toi ? 👇 Touche ton prénom :</label>
+      <div id="nameGrid" class="name-grid"><div class="hint" style="grid-column:1/-1; text-align:center">⏳ Chargement de la liste du parti…</div></div>
+      <div id="loginInfo" class="hint" style="margin-top:12px; min-height:20px; text-align:center"></div>
+    </div>
+  </section>
+
+  <!-- ============ CONFIG ============ -->
+  <section id="scr-cfg" class="screen">
+    <div class="hero"><span class="flake">⚙️</span>
+      <h1>Connexion au serveur<span class="sub">Colle l'URL de ton application web Apps Script</span></h1>
+    </div>
+    <div class="card">
+      <label class="f" for="inUrl">URL de l'app Google Apps Script</label>
+      <input id="inUrl" placeholder="https://script.google.com/macros/s/AKfy…/exec" autocomplete="off" spellcheck="false">
+      <div id="cfgInfo" class="hint" style="margin-top:10px; min-height:20px"></div>
+      <button class="btn green" id="btnCfgSave">Valider et enregistrer ✅</button>
+      <p class="hint" style="margin-top:14px">
+        1️⃣ Crée un Google Sheet · 2️⃣ <b>Extensions → Apps Script</b> · 3️⃣ colle le code <code>Code.gs</code> ·
+        4️⃣ <b>Déployer → Application web</b> (accès : tous) · 5️⃣ copie l'URL <code>/exec</code> ici. Voir README.md.
+      </p>
+      <div class="divider"></div>
+      <button class="btn ghost" id="btnCfgBack">← Retour</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="scr-game" class="screen">
+    <div class="card" id="cardMe">
+      <h2 id="meTitle">🎅 Salut !</h2>
+      <div id="meStatus"></div>
+      <div class="progress-line"><i id="progBar" style="width:0%"></i></div>
+      <div class="hint" id="progTxt" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card" id="cardWheel">
+      <div class="wheel-zone">
+        <div class="wheel-box" id="wheelBox">
+          <div class="pointer"></div>
+          <canvas id="wheel"></canvas>
+          <div class="hub">🍁</div>
+        </div>
+        <button class="btn" id="btnSpin" style="max-width:340px">🎵 Tourner la roue !</button>
+        <div class="hint" id="wheelHint"></div>
+      </div>
+    </div>
+
+    <div class="card" id="cardResult" style="display:none">
+      <h2>🎁 Ton tirage</h2>
+      <div id="resultBox"></div>
+    </div>
+
+    <!-- ===== ADMIN ===== -->
+    <div id="adminZone" style="display:none">
+      <details class="sec" id="secDraws">
+        <summary>📋 Tirages en direct</summary>
+        <div class="body" id="drawsBody"></div>
+      </details>
+      <details class="sec" id="secRules">
+        <summary>🚫 Règles (couples, interdictions)</summary>
+        <div class="body">
+          <div id="rulesList"></div>
+          <div class="divider"></div>
+          <div class="row">
+            <div><label class="f">Qui</label><select id="rFrom"></select></div>
+            <div style="display:grid; place-items:center; font-size:22px; padding-top:22px">⛔</div>
+            <div><label class="f">Ne peut pas tirer</label><select id="rTo"></select></div>
+          </div>
+          <label class="checkline"><input type="checkbox" id="rBoth"> Les deux (couple) — ni l'un ni l'autre ne peut tirer l'autre</label>
+          <button class="btn small" id="btnAddRule" style="margin-top:12px">Bloquer ce duo 🚫</button>
+          <div class="hint" style="margin-top:10px">Astuce : les règles protègent aussi le dernier joueur — l'app vérifie qu'un tirage complet reste possible.</div>
+        </div>
+      </details>
+      <details class="sec" id="secPlayers">
+        <summary>👥 Joueurs &amp; rôles</summary>
+        <div class="body">
+          <div id="playersList"></div>
+          <div class="divider"></div>
+          <div class="row">
+            <div><label class="f">Nom du joueur</label><input id="pName" placeholder="Ex. Marie-Pier" maxlength="40"></div>
+            <div style="max-width:150px"><label class="f">Rôle</label><select id="pRole"><option value="Joueur">Joueur</option><option value="Admin">Admin</option></select></div>
+          </div>
+          <button class="btn small green" id="btnAddPlayer" style="margin-top:12px">Ajouter ➕</button>
+          <div class="hint" style="margin-top:10px">Les rôles sont enregistrés dans l'onglet <b>Joueurs</b> du Google Sheet (tu peux aussi les gérer directement là-bas).</div>
+        </div>
+      </details>
+      <details class="sec" id="secDanger">
+        <summary style="color:#ffb3b9">⚠️ Zone de danger</summary>
+        <div class="body">
+          <p class="hint">Efface <b>tous les tirages</b> pour relancer une partie. Les joueurs, règles et rôles sont conservés.</p>
+          <div id="resetZone">
+            <button class="btn red" id="btnReset">🗑️ Tout effacer et relancer une partie</button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <footer>Canadian Father Christmas approved · Fait avec ❄️ et du sirop d'érable<br>Tuque, bière et bon tirage, mon chum !</footer>
+  </section>
+</div>
+
+<script>
+'use strict';
+/* =============================================================
+   🍁 Père Noël Canadien — client léger pour Google Apps Script
+   ============================================================= */
+/* ⭐⭐⭐ CONFIGURATION UNE SEULE FOIS (avant d'envoyer le fichier à tes invités) ⭐⭐⭐
+   Colle ici l'URL de ton application web Apps Script (celle qui finit par /exec).
+   Tes invités n'auront RIEN à configurer : ils arrivent directement sur l'écran
+   de choix du prénom. Exemple :
+   const DEFAULT_URL='https://script.google.com/macros/s/AKfycb…/exec';            */
+const DEFAULT_URL='';
+
+const LS_URL='pnc_script_url', LS_ME='pnc_me', LS_SOUND='pnc_sound';
+let SCRIPT_URL=DEFAULT_URL||localStorage.getItem(LS_URL)||'';
+let ME=null, STATE={players:[],draws:[],rules:[]}, WHEEL_READY=false, BUSY=false;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const normalizeName=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const PHRASES=['Chut… c\'est un secret entre toi et la roue 🤫','Pas un mot au barrage, hein ! 🍁','Le Père Noël compte sur toi, mon chum !','Bonne chance dans la neige ❄️','Garde-le précieusement sous ta tuque !','Même le printemps ne doit pas le savoir 🌷'];
+const AVATARS=['🐻','🦫','🦌','🦉','🐿️','🦋','🐺','🦔','🐸','🦫','🦅','🐰','🦭','🦌','🦫','🐻‍❄️'];
+const avatarFor=n=>AVATARS[[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%AVATARS.length];
+
+/* ---------- petits utilitaires UI ---------- */
+function toast(msg,err=false){
+  const t=document.createElement('div'); t.className='toast'+(err?' err':'');
+  t.innerHTML=(err?'⚠️ ':'✅ ')+msg; $('toasts').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400)},3600);
+}
+function api(action,payload={}){
+  return fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload})})
+    .then(async r=>{const txt=await r.text(); try{return JSON.parse(txt)}catch(_){throw new Error('Réponse invalide du serveur : '+txt.slice(0,140))}})
+    .then(d=>{if(!d||d.ok!==true)throw new Error((d&&d.error)||'Erreur serveur'); return d});
+}
+function fullReload(silent=false){
+  return api('getState').then(d=>{STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[]};
+    if(!silent)renderGame();
+    try{localStorage.setItem('pnc_state_'+(ME&&ME.name||''),JSON.stringify(STATE))}catch(_){}
+  });
+}
+
+/* ---------- audio ---------- */
+let AC=null, SOUND=localStorage.getItem(LS_SOUND)!=='0';
+function ac(){if(!AC)try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(_){} return AC}
+function tick(){if(!SOUND)return; const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain();
+  o.type='square'; o.frequency.value=1600+Math.random()*500; g.gain.setValueAtTime(.045,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.045); o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+.05);}
+function fanfare(win=true){if(!SOUND)return; const c=ac(); if(!c)return;
+  const seq=win?[523.25,659.25,783.99,1046.5]:[392,330,262];
+  seq.forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain(); o.type='triangle'; o.frequency.value=f;
+    const t=c.currentTime+i*.13; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.14,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+.5);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+.55);});}
+function clickSnd(){if(!SOUND)return; const c=ac(); if(!c)return; const o=c.createOscillator(),g=c.createGain();
+  o.type='sine'; o.frequency.value=880; g.gain.setValueAtTime(.06,c.currentTime); g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.12);
+  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+.13);}
+
+/* ---------- neige ---------- */
+(function(){const cv=$('fx'),ctx=cv.getContext('2d'); let W,H,fl=[];
+  function rs(){W=cv.width=innerWidth; H=cv.height=innerHeight;
+    const n=Math.min(130,Math.floor(W/9));
+    fl=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*2.6,s:.4+Math.random()*1.3,w:Math.random()*Math.PI*2,vw:.004+Math.random()*.02}));}
+  rs(); addEventListener('resize',rs);
+  (function loop(){ctx.clearRect(0,0,W,H); ctx.fillStyle='rgba(255,255,255,.75)';
+    for(const f of fl){f.y+=f.s; f.w+=f.vw; f.x+=Math.sin(f.w)*.5; if(f.y>H+5){f.y=-5; f.x=Math.random()*W}
+      ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.fill();}
+    requestAnimationFrame(loop);})();})();
+
+/* ---------- navigation écrans ---------- */
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); window.scrollTo({top:0,behavior:'smooth'})}
+
+/* ---------- LOGIN (grille de prénoms : 1re touche = choix, 2e = confirmation) ---------- */
+let PENDING_NAME=null;
+function renderLoginInfo(){
+  const grid=$('nameGrid'), box=$('loginInfo');
+  if(!STATE.players.length){grid.innerHTML='<div class="hint" style="grid-column:1/-1; text-align:center">⏳ Chargement de la liste du parti…</div>'; box.textContent=''; return}
+  /* 100 % secret : la grille est identique pour tout le monde, on ne montre
+     JAMAIS qui a déjà tiré — ni ici, ni ailleurs. */
+  grid.innerHTML=STATE.players.map(p=>{
+    const cls='name-btn'+(PENDING_NAME===p.nom?' confirm':'');
+    return '<button class="'+cls+'" data-name="'+esc(p.nom)+'"><span class="av">'+avatarFor(p.nom)+'</span>'+esc(p.nom)+'</button>';
+  }).join('');
+  box.textContent=PENDING_NAME?('Encore une petite touche pour confirmer, '+PENDING_NAME+' 👉'):'';
+}
+function doLogin(nom){
+  const p=STATE.players.find(x=>normalizeName(x.nom)===normalizeName(nom));
+  if(!p){toast('Prénom introuvable dans la liste',true); return}
+  clickSnd();
+  ME={name:p.nom,role:p.role}; localStorage.setItem(LS_ME,JSON.stringify(ME));
+  PENDING_NAME=null;
+  enterGame();
+}
+function doLogout(){localStorage.removeItem(LS_ME); ME=null; show('scr-login'); $('topbar').style.display='none'; renderLoginInfo()}
+
+/* ---------- écran jeu ---------- */
+function enterGame(){
+  show('scr-game'); $('topbar').style.display='flex';
+  $('roleBadge').style.display='inline-flex';
+  $('roleBadge').textContent=(ME.role==='Admin'?'👑 Admin · ':'🎄 Joueur · ')+ME.name;
+  $('roleBadge').classList.toggle('admin',ME.role==='Admin');
+  $('meTitle').innerHTML=avatarFor(ME.name)+' Salut <u>'+esc(ME.name)+'</u> !';
+  $('adminZone').style.display=ME.role==='Admin'?'block':'none';
+  renderGame();
+  fullReload().catch(()=>{});
+  clearInterval(window._poll); window._poll=setInterval(()=>{if(!BUSY&&document.visibilityState==='visible')fullReload().catch(()=>{})},12000);
+}
+function renderGame(){
+  const total=STATE.players.length, done=STATE.draws.length;
+  $('progBar').style.width=total?Math.round(done/total*100)+'%':'0%';
+  $('progTxt').textContent=total?('Parti en cours : '+done+' tirage'+(done>1?'s':'')+' sur '+total+(done===total&&total?' — tout le monde a son personnage ! 🎉':'')):'Chargement…';
+
+  /* mon statut */
+  const my=STATE.draws.find(d=>normalizeName(d.joueur)===normalizeName(ME.name));
+  const canSpin=!my&&!BUSY&&STATE.players.length>=2;
+  $('meStatus').innerHTML=my
+    ?'<div class="hint">Tu as déjà tiré ton personnage 🎁 — garde le secret ! <b style="color:var(--gold)">→ '+esc(my.personnage)+'</b> (scroll en bas pour revoir)</div>'
+    :'🎁 Tu n\'as <b>pas encore</b> ton personnage secret. Une seule chance : la roue décide !';
+  $('btnSpin').disabled=!canSpin;
+  $('wheelHint').textContent=my?'La roue a déjà parlé pour toi ✨':(BUSY?'La roue tourne…':'Prêt ? La roue montre tout le monde : si elle s\'arrête sur un nom déjà pris, le Père Noël rechoisit en secret 🤫');
+
+  /* résultat (re-consultable) */
+  const cr=$('cardResult');
+  if(my){cr.style.display='block'; $('resultBox').innerHTML=
+    '<div style="text-align:center"><span style="font-size:44px">🎁</span>'+
+    '<div style="font-size:24px; font-weight:700; color:var(--gold); margin-top:4px">'+esc(my.personnage)+'</div>'+
+    '<div class="hint" style="margin-top:6px">Tu offres un cadeau à <b>'+esc(my.personnage)+'</b> · '+esc(PHRASES[([].concat(esc(my.personnage)).join('').length)%PHRASES.length])+'</div></div>';
+  } else cr.style.display='none';
+
+  if(WHEEL_READY)buildWheel();
+  if(ME.role==='Admin')renderAdmin();
+  $('sheetLink').href=STATE.players.length?SCRIPT_URL:'#';
+}
+
+/* ---------- ADMIN ---------- */
+function renderAdmin(){
+  const seld=p=>'<option value="'+esc(p.nom)+'">'+esc(p.nom)+'</option>';
+  $('rFrom').innerHTML=STATE.players.map(seld).join('')||'';
+  $('rTo').innerHTML=STATE.players.map(seld).join('')||'';
+
+  $('rulesList').innerHTML=STATE.rules.length
+    ?STATE.rules.map(r=>'<span class="chip">🚫 '+esc(r.qui)+' ⛔ '+esc(r.exclut)+(r.lesDeux?' <i>(les deux)</i>':'')+' <span class="x" data-delrule="'+esc(r.id)+'" title="Supprimer">✕</span></span>').join('')
+    :'<span class="hint">Aucune règle — tout le monde peut tirer n\'importe qui (sauf soi-même 😉).</span>';
+
+  const mine=STATE.draws.reduce((a,d)=>(a[d.joueur]=d.personnage,a),{});
+  $('playersList').innerHTML=STATE.players.map(p=>{
+    const d=mine[p.nom];
+    return '<div style="display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06)">'+
+      '<span style="font-size:18px">'+avatarFor(p.nom)+'</span><b style="flex:1">'+esc(p.nom)+'</b>'+
+      '<span class="pill'+(p.role==='Admin'?' admin':'')+'">'+(p.role==='Admin'?'👑 Admin':'🎄 Joueur')+'</span>'+
+      '<button class="btn small ghost" data-role="'+esc(p.nom)+'|'+(p.role==='Admin'?'Joueur':'Admin')+'" style="padding:5px 10px; font-size:12px">'+(p.role==='Admin'?'→ Joueur':'→ Admin')+'</button>'+
+      '<button class="btn small ghost" data-delplayer="'+esc(p.nom)+'" style="padding:5px 10px; font-size:12px; color:#ffb3b9">🗑️</button>'+
+      (d?'<span style="color:var(--muted); font-size:12px">→ '+esc(d)+'</span>':'')+'</div>';
+  }).join('');
+
+  $('drawsBody').innerHTML=STATE.draws.length
+    ?'<table><thead><tr><th>Joueur</th><th>Tire au sort</th></tr></thead><tbody>'+
+      STATE.draws.map(d=>'<tr><td class="who">'+avatarFor(d.joueur)+' '+esc(d.joueur)+'</td><td class="gift">🎁 '+esc(d.personnage)+'</td></tr>').join('')+'</tbody></table>'
+    :'<span class="hint">Aucun tirage pour l\'instant — lance la roue 🎡</span>';
+}
+
+/* ---------- ROUE ---------- */
+const PALETTE=['#e63946','#2a9d8f','#ffd166','#457b9d','#f4a261','#a8dadc','#e76f51','#8ab17d','#ef8354','#b5838d','#5bc0eb','#9b5de5'];
+let WHEEL={items:[],angles:[],spin:0,spinning:false};
+function buildWheel(){
+  const me=ME?normalizeName(ME.name):'';
+  /* MYSTÈRE PRÉSERVÉ : la roue affiche TOUJOURS tous les joueurs (sauf soi-même),
+     même ceux déjà tirés ou bloqués par une règle — sinon, en voyant la roue
+     rétrécir, on devinerait qui a déjà été pioché. Si la roue s'arrête sur un
+     nom invalide, le serveur rechoisit et la roue se recale discrètement. */
+  const items=STATE.players.filter(p=>normalizeName(p.nom)!==me)
+    .map(p=>avatarFor(p.nom)+' '+p.nom);
+  if(!items.length){const cv=$('wheel'); const ctx=cv.getContext('2d'); cv.width=cv.height=0; WHEEL.items=[]; return}
+  WHEEL.items=items;
+  if(!WHEEL.spinning)drawWheel(items); // ne jamais toucher à l'anim pendant un spin
+}
+function drawWheel(items){
+  const cv=$('wheel'),box=$('wheelBox'),dpr=Math.min(2,window.devicePixelRatio||1);
+  const size=box.clientWidth||320; cv.width=size*dpr; cv.height=size*dpr; cv.style.width=size+'px'; cv.style.height=size+'px';
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  const R=size/2, cx=size/2, cy=size/2, n=items.length, a0=(Math.PI*2)/n;
+  ctx.clearRect(0,0,size,size);
+  for(let i=0;i<n;i++){
+    const a=WHEEL.spin+i*a0;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R-4,a,a+a0); ctx.closePath();
+    ctx.fillStyle=PALETTE[i%PALETTE.length]; ctx.fill();
+    ctx.strokeStyle='rgba(10,20,40,.55)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(a+a0/2);
+    ctx.textAlign='right'; ctx.fillStyle='#fff';
+    ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=4;
+    const label=items[i], namePart=label.replace(/^\S+\s+/,'');
+    let fs=n>12?12:n>8?14:16; ctx.font='600 '+fs+'px Fredoka, sans-serif';
+    if(ctx.measureText(namePart).width>R-64){fs=Math.max(10,fs*(R-64)/ctx.measureText(namePart).width); ctx.font='600 '+fs+'px Fredoka, sans-serif'}
+    ctx.fillText(namePart,R-46,5);
+    ctx.shadowBlur=0; ctx.font=(fs+5)+'px serif'; ctx.fillText(label.split(' ')[0],R-46-(ctx.measureText(namePart).width+12),5);
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,R-3,0,7); ctx.lineWidth=6; ctx.strokeStyle='#0e2247'; ctx.stroke();
+}
+function spinLoop(){
+  if(!WHEEL.spinning)return;
+  WHEEL.vel*=WHEEL.fric;
+  if(performance.now()<SPIN_MIN){
+    if(WHEEL.vel<0.025)WHEEL.vel=0.025;          // la roue tourne au moins jusqu'au temps minimum
+  }else if(!WHEEL.stopping&&WHEEL.vel<0.025){
+    WHEEL.stopping=true; WHEEL.fric=0.965;        // phase d'arrêt naturel (~1 s)
+  }
+  WHEEL.spin+=WHEEL.vel;
+  const n=WHEEL.items.length,a0=(Math.PI*2)/n;
+  const ptr=Math.PI*1.5; const k=Math.floor(((ptr-WHEEL.spin)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)/a0);
+  if(k!==WHEEL.lastK){WHEEL.lastK=k; tick()}
+  drawWheel(WHEEL.items);
+  if(WHEEL.vel<0.0035&&performance.now()>=SPIN_MIN){WHEEL.spinning=false; onWheelStopped(); return}
+  requestAnimationFrame(spinLoop);
+}
+let SPIN_MIN=0;
+function startSpin(minMs){
+  if(WHEEL.spinning||BUSY)return;
+  WHEEL.spinning=true; BUSY=true; $('btnSpin').disabled=true;
+  $('wheelBox').classList.add('shake'); setTimeout(()=>$('wheelBox').classList.remove('shake'),500);
+  WHEEL.vel=0.32+Math.random()*0.10; WHEEL.fric=0.984; WHEEL.lastK=-1; WHEEL.stopping=false;
+  SPIN_MIN=performance.now()+minMs;
+  spinLoop();
+}
+function winnerFromAngle(){
+  const n=WHEEL.items.length; if(!n)return null;
+  const a0=(Math.PI*2)/n, ptr=Math.PI*1.5;
+  const idx=Math.floor(((ptr-WHEEL.spin)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)/a0);
+  const label=WHEEL.items[idx]||WHEEL.items[0];
+  const name=label.replace(/^\S+\s+/,'');
+  return STATE.players.find(p=>normalizeName(p.nom)===normalizeName(name))||STATE.players.find(p=>p.nom===name)||{nom:name,role:'Joueur'};
+}
+
+function doSpin(){
+  const my=STATE.draws.find(d=>normalizeName(d.joueur)===normalizeName(ME.name));
+  if(my||WHEEL.spinning||BUSY)return;
+  if(STATE.players.length<2)return toast('Il faut au moins 2 joueurs !',true);
+  clickSnd();
+  startSpin(3400+Math.random()*1600); // la roue s'arrête toute seule puis valide côté serveur
+}
+async function onWheelStopped(){
+  const pick=winnerFromAngle();
+  try{
+    const d=await api('draw',{joueur:ME.name, choix:pick.nom});
+    if(d.choix&&normalizeName(d.choix)!==normalizeName(pick.nom)){
+      // le serveur a re-choisi (choix devenu invalide entre-temps) : on recale la roue sur le gagnant officiel
+      const nm=d.choix; await new Promise(r=>setTimeout(r,400));
+      WHEEL.items=['⭐ '+nm].concat(WHEEL.items.filter(x=>normalizeName(x.replace(/^\S+\s+/,''))!==normalizeName(pick.nom)));
+      drawWheel(WHEEL.items);
+    }
+    // garde-fou : on refuse toute réponse serveur qui nous assignerait notre propre nom
+    const finalChoice=normalizeName(d.choix||'')===normalizeName(ME.name)?null:(d.choix||pick.nom);
+    const rec={joueur:ME.name,personnage:finalChoice,recale:d.choix&&normalizeName(d.choix)!==normalizeName(pick.nom)};
+    if(!rec.personnage){ // réponse inexploitable : resync complet, la feuille fait foi
+      BUSY=false; await fullReload(); return;
+    }
+    STATE.draws.push(rec); STATE.draws.sort((a,b)=>normalizeName(a.joueur).localeCompare(normalizeName(b.joueur)));
+    finishSpin(true,rec);
+  }catch(e){
+    BUSY=false; renderGame();
+    toast((e&&e.message)||'Erreur du tirage',true);
+    if(/déjà tiré|already/i.test((e&&e.message)||'')){fullReload().catch(()=>{})}
+  }
+}
+function finishSpin(win=true,rec){
+  BUSY=false; fanfare(win); confetti();
+  renderGame();
+  if(win&&rec&&rec.personnage){
+    const ov=document.createElement('div'); ov.className='modal-ov';
+    ov.innerHTML='<div class="modal"><span class="big">🎉</span><div class="kicker">La roue a choisi pour</div>'+
+      '<div class="name">'+esc(rec.joueur)+'</div><div class="hint">Tu offres ton cadeau à…</div>'+
+      '<div class="name" style="font-size:clamp(34px,9vw,52px)">'+esc(rec.personnage)+'</div>'+
+      '<div class="phrase">« '+esc(PHRASES[Math.floor(Math.random()*PHRASES.length)])+' »</div>'+
+      (rec.recale?'<div class="hint" style="margin-top:10px; font-size:12px">🎡 La roue s\'était arrêtée sur un nom déjà pris — le Père Noël a rechoisi en secret.</div>':'')+
+      '<button class="btn green" style="margin-top:18px" id="mOk">C\'est noté, chut ! 🤫</button></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#mOk').onclick=()=>{clickSnd(); ov.remove()};
+    ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  }
+}
+
+/* ---------- confetti ---------- */
+function confetti(){
+  const cv=$('fx'),ctx=cv.getContext('2d'); const W=cv.width,H=cv.height;
+  const parts=Array.from({length:160},()=>({x:Math.random()*W,y:-20-Math.random()*H*.3,r:3+Math.random()*5,
+    c:['#e63946','#ffd166','#2a9d8f','#a8dadc','#fff'][Math.floor(Math.random()*5)],vy:2.5+Math.random()*4,vx:-1.2+Math.random()*2.4,rot:Math.random()*6,vr:-.2+Math.random()*.4}));
+  let t=0; (function fall(){t++; ctx.save();
+    for(const p of parts){p.y+=p.vy; p.x+=p.vx+Math.sin((t+p.rot*10)*.05)*.6; p.rot+=p.vr;
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.6); ctx.setTransform(1,0,0,1,0,0)}
+    ctx.restore(); if(t<240)requestAnimationFrame(fall); else ctx.clearRect(0,0,W,H)})();
+}
+
+/* ---------- actions admin ---------- */
+async function act(fn,okMsg){
+  try{await fn(); if(okMsg)toast(okMsg); await fullReload()}
+  catch(e){toast((e&&e.message)||'Erreur',true)}
+}
+function bindAdmin(){
+  $('btnAddRule').onclick=()=>{
+    const f=$('rFrom').value,t=$('rTo').value,both=$('rBoth').checked;
+    if(!f||!t)return toast('Choisis les deux personnes',true);
+    if(normalizeName(f)===normalizeName(t))return toast('Choisis deux personnes différentes',true);
+    act(()=>api('addRule',{qui:f,exclut:t,lesDeux:both}),'Règle ajoutée 🚫');
+  };
+  $('btnAddPlayer').onclick=()=>{
+    const n=$('pName').value.trim();
+    if(!n)return toast('Entre un nom',true);
+    act(()=>api('addPlayer',{nom:n,role:$('pRole').value}).then(()=>$('pName').value=''),'Joueur ajouté 🎅');
+  };
+  $('btnReset').onclick=()=>{
+    if($('btnReset').dataset.armed!=='1'){
+      $('btnReset').dataset.armed='1'; $('btnReset').textContent='⚠️ Confirmer : tout effacer ? (2e clic)';
+      setTimeout(()=>{if($('btnReset').dataset.armed==='1'){$('btnReset').dataset.armed='0'; $('btnReset').textContent='🗑️ Tout effacer et relancer une partie'}},4000);
+      return;
+    }
+    $('btnReset').dataset.armed='0'; $('btnReset').textContent='🗑️ Tout effacer et relancer une partie';
+    act(()=>api('resetGame'),'Nouvelle partie prête 🎉');
+  };
+  if(!document.body.dataset.adminBound){ // jamais deux fois le même listener
+    document.body.dataset.adminBound='1';
+  document.addEventListener('click',e=>{
+    const x=e.target.closest('[data-delrule]'); if(x){act(()=>api('delRule',{id:x.dataset.delrule}),'Règle supprimée'); return}
+    const dp=e.target.closest('[data-delplayer]'); if(dp){
+      if(dp.dataset.armed!=='1'){dp.dataset.armed='1'; dp.textContent='Sûr ?'; setTimeout(()=>{dp.dataset.armed='0'; dp.textContent='🗑️'},3000); return}
+      act(()=>api('delPlayer',{nom:dp.dataset.delplayer}),'Joueur supprimé'); return}
+    const rb=e.target.closest('[data-role]'); if(rb){const [nom,role]=rb.dataset.role.split('|'); act(()=>api('setRole',{nom,role}),'Rôle mis à jour 👑'); return}
+  });
+  }
+}
+
+/* ---------- config ---------- */
+function showCfg(back){
+  $('scr-cfg').dataset.back=back||'login'; $('inUrl').value=SCRIPT_URL;
+  $('cfgInfo').textContent=SCRIPT_URL?'URL enregistrée — tu peux la remplacer ou revalider.':'';
+  show('scr-cfg'); $('topbar').style.display='none';
+}
+function validateUrl(u){
+  try{const x=new URL(u); if(!x.hostname.endsWith('script.google.com')&&!x.hostname.endsWith('script.googleusercontent.com'))return false; return u.indexOf('/macros/s/')>=0&&u.indexOf('/exec')>=0}catch(_){return false}
+}
+async function cfgSave(){
+  const u=$('inUrl').value.trim();
+  if(!u)return toast('Colle une URL',true);
+  $('btnCfgSave').disabled=true; $('cfgInfo').textContent='⏳ Vérification du serveur…';
+  const old=SCRIPT_URL; SCRIPT_URL=u.replace(/[?&#].*$/,'');
+  try{
+    const d=await api('getState');
+    STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[]};
+    localStorage.setItem(LS_URL,SCRIPT_URL); $('sheetLink').href=SCRIPT_URL;
+    toast('Connecté ! '+STATE.players.length+' joueur(s) sur le Sheet 🎉');
+    show('scr-login'); renderLoginInfo();
+  }catch(e){
+    SCRIPT_URL=old; $('cfgInfo').textContent='❌ '+((e&&e.message)||'Serveur injoable'); toast('Connexion échouée',true);
+  }
+  $('btnCfgSave').disabled=false;
+}
+
+/* ---------- boot ---------- */
+function renderLoginInfoAll(){renderLoginInfo()}
+async function boot(){
+  $('btnSound').textContent=SOUND?'🔊':'🔇';
+  $('btnCfg').onclick=()=>showCfg(ME?'game':'login');
+  $('btnCfgBack').onclick=()=>{const b=$('scr-cfg').dataset.back; if(b==='game'&&ME){show('scr-game'); $('topbar').style.display='flex'} else {show('scr-login'); renderLoginInfoAll()}};
+  $('btnCfgSave').onclick=cfgSave;
+  $('btnSound').onclick=()=>{SOUND=!SOUND; localStorage.setItem(LS_SOUND,SOUND?'1':'0'); $('btnSound').textContent=SOUND?'🔊':'🔇'; if(SOUND)clickSnd()};
+  $('btnOut').onclick=()=>{clickSnd(); doLogout()};
+  const grid=$('nameGrid');
+  if(!grid.dataset.bound){ // jamais deux fois le même listener (double-boot safe)
+    grid.dataset.bound='1';
+  grid.addEventListener('click',e=>{
+    const b=e.target.closest('.name-btn'); if(!b)return;
+    const nom=b.dataset.name;
+    if(PENDING_NAME===nom){doLogin(nom); return}   // 2e touche = confirmé, on entre
+    PENDING_NAME=nom; clickSnd(); renderLoginInfo(); // 1re touche = surlignage
+    setTimeout(()=>{if(PENDING_NAME===nom){PENDING_NAME=null; renderLoginInfo()}},4000);
+  });
+  }
+  $('btnSpin').onclick=doSpin;
+  bindAdmin();
+  WHEEL_READY=true;
+
+  if(!SCRIPT_URL){showCfg('login'); return} // DEFAULT_URL vide : écran de config pour l'admin
+  show('scr-login'); renderLoginInfo();
+  api('getState').then(d=>{
+    STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[]};
+    renderLoginInfoAll();
+    const saved=localStorage.getItem(LS_ME);
+    if(saved){try{const m=JSON.parse(saved); const p=STATE.players.find(x=>normalizeName(x.nom)===normalizeName(m.name)); if(p){ME={name:p.nom,role:p.role}; enterGame()}}catch(_){}}
+  }).catch(()=>{renderLoginInfo(); $('loginInfo').innerHTML='❌ Serveur injoable — <a href="#" id="lkCfg" style="color:var(--ice)">vérifier l\'URL</a>';
+    const lk=$('lkCfg'); if(lk)lk.onclick=e=>{e.preventDefault(); showCfg('login')}});
+}
+document.addEventListener('DOMContentLoaded',boot);
+</script>
+</body>
+</html>
