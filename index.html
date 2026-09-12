@@ -304,6 +304,17 @@
           <div class="hint" style="margin-top:10px">Les rôles sont enregistrés dans l'onglet <b>Joueurs</b> du Google Sheet (tu peux aussi les gérer directement là-bas).</div>
         </div>
       </details>
+      <details class="sec" id="secShare">
+        <summary>🔗 Partager le jeu à tes invités</summary>
+        <div class="body">
+          <p class="hint">Envoie ce lien à tes invités : ils arrivent <b>directement</b> sur le portail (code de fête ou grille de prénoms) — rien à configurer, même sur GitHub Pages.</p>
+          <div style="display:flex; gap:8px; margin-top:10px">
+            <input id="shareLink" readonly style="flex:1; font-size:13px">
+            <button class="btn small" id="btnCopyShare" style="width:auto">📋 Copier</button>
+          </div>
+          <div class="hint" style="margin-top:8px">Astuce : ce lien contient l'adresse du serveur (encodée). Tu peux aussi l'épingler dans votre groupe texto.</div>
+        </div>
+      </details>
       <details class="sec" id="secCode">
         <summary>🔑 Code de fête (mot de passe des joueurs)</summary>
         <div class="body">
@@ -374,7 +385,18 @@ function toast(msg,err=false){
   t.innerHTML=(err?'⚠️ ':'✅ ')+msg; $('toasts').appendChild(t);
   setTimeout(()=>{t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400)},3600);
 }
+/* ---------- API ---------- */
+const HOSTED=(typeof google!=='undefined'&&google.script&&google.script.run); // servi PAR Apps Script (lien /exec)
+function gsRun(action,payload){
+  return new Promise((resolve,reject)=>{
+    google.script.run
+      .withSuccessHandler(o=>{if(o&&o.ok!==false)resolve(o);else reject(new Error((o&&o.error)||'Erreur serveur'))})
+      .withFailureHandler(e=>reject(new Error((e&&e.message)||'Serveur injoable')))
+      [action](payload||{});
+  });
+}
 function api(action,payload={}){
+  if(HOSTED)return gsRun(action,payload);
   return fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload})})
     .then(async r=>{const txt=await r.text(); try{return JSON.parse(txt)}catch(_){throw new Error('Réponse invalide du serveur : '+txt.slice(0,140))}})
     .then(d=>{if(!d||d.ok!==true)throw new Error((d&&d.error)||'Erreur serveur'); return d});
@@ -497,6 +519,12 @@ function renderAdmin(){
       '<button class="btn small ghost" data-delplayer="'+esc(p.nom)+'" style="padding:5px 10px; font-size:12px; color:#ffb3b9">🗑️</button>'+
       (d?'<span style="color:var(--muted); font-size:12px">→ '+esc(d)+'</span>':'')+'</div>';
   }).join('');
+
+  $('shareLink').value=(function(){
+    const base=location.origin+location.pathname;
+    const b64=btoa(unescape(encodeURIComponent(SCRIPT_URL))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    return base+'?s='+b64;
+  })();
 
   $('codeStatus').innerHTML=STATE.partyCode
     ?'🔒 Un code est <b>activé</b> : les nouveaux appareils doivent le taper pour entrer.'
@@ -674,6 +702,12 @@ function bindAdmin(){
   $('btnClearCode').onclick=()=>{
     act(()=>api('setPartyCode',{code:''}).then(()=>localStorage.removeItem(LS_CODE)),'Accès libre activé');
   };
+  $('btnCopyShare').onclick=()=>{
+    const inp=$('shareLink');
+    const done=()=>toast('Lien copié ! Colle-le dans le groupe 📲');
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(inp.value).then(done).catch(()=>{inp.select();document.execCommand('copy');done()})}
+    else{inp.select();document.execCommand('copy');done()}
+  };
   if(!document.body.dataset.adminBound){ // jamais deux fois le même listener
     document.body.dataset.adminBound='1';
   document.addEventListener('click',e=>{
@@ -745,7 +779,7 @@ async function boot(){
     if(saved){try{const m=JSON.parse(saved); const p=STATE.players.find(x=>normalizeName(x.nom)===normalizeName(m.name)); if(p){ME={name:p.nom,role:p.role}; enterGame()}}catch(_){}}
   }
   function connect(url){
-    SCRIPT_URL=url; localStorage.setItem(LS_URL,url); $('sheetLink').href=url;
+    if(url){SCRIPT_URL=url; localStorage.setItem(LS_URL,url); $('sheetLink').href=url;}
     show('scr-login');
     api('getState').then(d=>{
       STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[],partyCode:d.partyCode||''};
@@ -768,24 +802,24 @@ async function boot(){
     if(!code)return;
     $('btnCode').disabled=true; $('codeInfo').textContent='⏳ Connexion à la cabane…';
     const url=SCRIPT_URL||DEFAULT_URL||(PARTY_CODES[code]||'').trim();
-    if(!url){
+    if(!url&&!HOSTED){
       $('codeInfo').textContent='❌ Aucun serveur connu — passe par ⚙️ config (admin)';
       $('btnCode').disabled=false; return;
     }
-    const old=SCRIPT_URL; SCRIPT_URL=url;
+    const old=SCRIPT_URL; if(url)SCRIPT_URL=url;
     try{
       const d=await api('getState');
-      const need=normalizeName(d.partyCode||'');
+      const need=normalizeCode(d.partyCode||'');
       if(need&&code!==need){ // mauvais mot de passe : on ne connecte pas
-        SCRIPT_URL=old;
+        if(url)SCRIPT_URL=old;
         $('codeInfo').textContent='❌ Code incorrect — demande-le à l\'organisateur 🎅';
         $('btnCode').disabled=false; return;
       }
       localStorage.setItem(LS_CODE,code);
-      connect(url);
+      connect(url||SCRIPT_URL);
       toast('Bienvenue dans la cabane ! 🎉');
     }catch(e){
-      SCRIPT_URL=old;
+      if(url)SCRIPT_URL=old;
       $('codeInfo').textContent='❌ Serveur injoable — réessaie dans un instant';
       $('btnCode').disabled=false;
     }
@@ -793,6 +827,25 @@ async function boot(){
   $('btnCode').onclick=submitCode;
   $('inCode').addEventListener('keydown',e=>{if(e.key==='Enter')submitCode()});
 
+  /* 🎯 MODE HÉBERGÉ : la page est servie PAR Apps Script (lien /exec partagé).
+     Aucune config : on connecte tout de suite — le portail (code ou grille) s'affiche. */
+  if(HOSTED){
+    $('btnCfg').style.display='none'; // rien à configurer pour les invités
+    connect(null); return;
+  }
+  /* 🔗 PARTAGE : si l'URL de la page contient ?s=<serveur encodé> (lien généré
+     par l'admin), on s'y connecte automatiquement — l'invité ne configure rien. */
+  try{
+    const qs=new URLSearchParams(location.search);
+    const s=qs.get('s');
+    if(s){
+      const url=decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+      if(/^https:\/\/script\.googleusercontent\.com|^https:\/\/script\.google\.com/.test(url)){
+        localStorage.setItem(LS_URL,url);
+        SCRIPT_URL=url;
+      }
+    }
+  }catch(_){}
   if(!SCRIPT_URL){
     if(DEFAULT_URL){connect(DEFAULT_URL)}
     else if(Object.keys(PARTY_CODES).length){showCodeGate()} // le code résoudra l'URL
