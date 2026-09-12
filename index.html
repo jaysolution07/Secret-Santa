@@ -211,7 +211,14 @@
       <span class="flake">🎅</span>
       <h1>Père Noël Canadien<span class="sub">La roue décide qui offre à qui, mon chum ! 🍁</span></h1>
     </div>
-    <div class="card">
+    <div class="card" id="cardCode" style="display:none">
+      <label class="f" style="text-align:center; font-size:15px">🔑 Entre le code du parti :</label>
+      <input id="inCode" placeholder="Ex. noel2026" autocomplete="off" maxlength="30" style="text-align:center; font-size:20px; letter-spacing:2px">
+      <div id="codeInfo" class="hint" style="margin-top:10px; min-height:20px; text-align:center"></div>
+      <button class="btn" id="btnCode" style="margin-top:10px">Entrer dans la cabane 🏕️</button>
+      <p class="hint" style="text-align:center; margin-top:12px">Demande le code à l'organisateur 🎅 · <a href="#" id="lkCodeCfg" style="color:var(--muted)">⚙️ config</a></p>
+    </div>
+    <div class="card" id="cardNames">
       <label class="f" style="text-align:center; font-size:15px">C'est qui, toi ? 👇 Touche ton prénom :</label>
       <div id="nameGrid" class="name-grid"><div class="hint" style="grid-column:1/-1; text-align:center">⏳ Chargement de la liste du parti…</div></div>
       <div id="loginInfo" class="hint" style="margin-top:12px; min-height:20px; text-align:center"></div>
@@ -297,6 +304,21 @@
           <div class="hint" style="margin-top:10px">Les rôles sont enregistrés dans l'onglet <b>Joueurs</b> du Google Sheet (tu peux aussi les gérer directement là-bas).</div>
         </div>
       </details>
+      <details class="sec" id="secCode">
+        <summary>🔑 Code de fête (mot de passe des joueurs)</summary>
+        <div class="body">
+          <p class="hint">Les invités devront taper ce code <b>une seule fois</b> sur leur appareil pour accéder au jeu (plus besoin de partager l'URL Apps Script). Laisse vide pour un accès libre.</p>
+          <div id="codeStatus" class="hint" style="margin-top:8px"></div>
+          <div class="row" style="margin-top:10px">
+            <div><label class="f">Nouveau code (3-30 caractères)</label><input id="inPartyCode" placeholder="Ex. noel2026" maxlength="30" autocomplete="off"></div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn small green" id="btnSaveCode">Enregistrer le code 🔑</button>
+            <button class="btn small ghost" id="btnClearCode">Supprimer le code (accès libre)</button>
+          </div>
+          <div class="hint" style="margin-top:10px">⚠️ Si tu changes le code, les appareils qui avaient l'ancien devront le retaper — parfait pour verrouiller une nouvelle partie.</div>
+        </div>
+      </details>
       <details class="sec" id="secDanger">
         <summary style="color:#ffb3b9">⚠️ Zone de danger</summary>
         <div class="body">
@@ -318,19 +340,30 @@
    🍁 Père Noël Canadien — client léger pour Google Apps Script
    ============================================================= */
 /* ⭐⭐⭐ CONFIGURATION UNE SEULE FOIS (avant d'envoyer le fichier à tes invités) ⭐⭐⭐
-   Colle ici l'URL de ton application web Apps Script (celle qui finit par /exec).
-   Tes invités n'auront RIEN à configurer : ils arrivent directement sur l'écran
-   de choix du prénom. Exemple :
-   const DEFAULT_URL='https://script.google.com/macros/s/AKfycb…/exec';            */
-const DEFAULT_URL='';
+   Deux options — choisis celle que tu préfères :
 
-const LS_URL='pnc_script_url', LS_ME='pnc_me', LS_SOUND='pnc_sound';
+   OPTION A — Accès direct : colle ton URL /exec dans DEFAULT_URL.
+   Tes invités arrivent directement sur la grille de prénoms, rien à faire.
+   Exemple :
+   const DEFAULT_URL='https://script.google.com/macros/s/AKfycb…/exec';
+
+   OPTION B — Code de fête (recommandé pour les groupes) : associe un code
+   simple à ton URL. Les invités tapent juste le code UNE fois (ex. noel2026),
+   il est mémorisé sur leur appareil, ensuite accès direct à chaque visite.   */
+const DEFAULT_URL='';
+const PARTY_CODES={
+  // 'noel2026' : 'https://script.google.com/macros/s/AKfycb…/exec',
+  // 'familledavoine' : 'https://script.google.com/macros/s/…/exec',
+};
+
+const LS_URL='pnc_script_url', LS_ME='pnc_me', LS_SOUND='pnc_sound', LS_CODE='pnc_code';
 let SCRIPT_URL=DEFAULT_URL||localStorage.getItem(LS_URL)||'';
-let ME=null, STATE={players:[],draws:[],rules:[]}, WHEEL_READY=false, BUSY=false;
+let ME=null, STATE={players:[],draws:[],rules:[],partyCode:''}, WHEEL_READY=false, BUSY=false;
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const normalizeName=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const normalizeCode=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\s'_\-]/g,''); // code de fête : espaces/apostrophes/tirets ignorés
 const PHRASES=['Chut… c\'est un secret entre toi et la roue 🤫','Pas un mot au barrage, hein ! 🍁','Le Père Noël compte sur toi, mon chum !','Bonne chance dans la neige ❄️','Garde-le précieusement sous ta tuque !','Même le printemps ne doit pas le savoir 🌷'];
 const AVATARS=['🐻','🦫','🦌','🦉','🐿️','🦋','🐺','🦔','🐸','🦫','🦅','🐰','🦭','🦌','🦫','🐻‍❄️'];
 const avatarFor=n=>AVATARS[[...n].reduce((a,c)=>a+c.charCodeAt(0),0)%AVATARS.length];
@@ -347,7 +380,7 @@ function api(action,payload={}){
     .then(d=>{if(!d||d.ok!==true)throw new Error((d&&d.error)||'Erreur serveur'); return d});
 }
 function fullReload(silent=false){
-  return api('getState').then(d=>{STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[]};
+  return api('getState').then(d=>{STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[],partyCode:d.partyCode||''};
     if(!silent)renderGame();
     try{localStorage.setItem('pnc_state_'+(ME&&ME.name||''),JSON.stringify(STATE))}catch(_){}
   });
@@ -464,6 +497,10 @@ function renderAdmin(){
       '<button class="btn small ghost" data-delplayer="'+esc(p.nom)+'" style="padding:5px 10px; font-size:12px; color:#ffb3b9">🗑️</button>'+
       (d?'<span style="color:var(--muted); font-size:12px">→ '+esc(d)+'</span>':'')+'</div>';
   }).join('');
+
+  $('codeStatus').innerHTML=STATE.partyCode
+    ?'🔒 Un code est <b>activé</b> : les nouveaux appareils doivent le taper pour entrer.'
+    :'🔓 Aucun code : tout appareil connecté peut entrer directement.';
 
   $('drawsBody').innerHTML=STATE.draws.length
     ?'<table><thead><tr><th>Joueur</th><th>Tire au sort</th></tr></thead><tbody>'+
@@ -628,6 +665,15 @@ function bindAdmin(){
     $('btnReset').dataset.armed='0'; $('btnReset').textContent='🗑️ Tout effacer et relancer une partie';
     act(()=>api('resetGame'),'Nouvelle partie prête 🎉');
   };
+  $('btnSaveCode').onclick=()=>{
+    const c=$('inPartyCode').value.trim();
+    if(!c)return toast('Entre un code (ou supprime-le)',true);
+    if(c.length<3)return toast('3 caractères minimum',true);
+    act(()=>api('setPartyCode',{code:c}).then(()=>{localStorage.setItem(LS_CODE,normalizeCode(c)); $('inPartyCode').value='';}),'Code enregistré 🔑');
+  };
+  $('btnClearCode').onclick=()=>{
+    act(()=>api('setPartyCode',{code:''}).then(()=>localStorage.removeItem(LS_CODE)),'Accès libre activé');
+  };
   if(!document.body.dataset.adminBound){ // jamais deux fois le même listener
     document.body.dataset.adminBound='1';
   document.addEventListener('click',e=>{
@@ -656,9 +702,10 @@ async function cfgSave(){
   const old=SCRIPT_URL; SCRIPT_URL=u.replace(/[?&#].*$/,'');
   try{
     const d=await api('getState');
-    STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[]};
+    STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[],partyCode:d.partyCode||''};
     localStorage.setItem(LS_URL,SCRIPT_URL); $('sheetLink').href=SCRIPT_URL;
     toast('Connecté ! '+STATE.players.length+' joueur(s) sur le Sheet 🎉');
+    $('cardCode').style.display='none'; $('cardNames').style.display='block';
     show('scr-login'); renderLoginInfo();
   }catch(e){
     SCRIPT_URL=old; $('cfgInfo').textContent='❌ '+((e&&e.message)||'Serveur injoable'); toast('Connexion échouée',true);
@@ -690,15 +737,69 @@ async function boot(){
   bindAdmin();
   WHEEL_READY=true;
 
-  if(!SCRIPT_URL){showCfg('login'); return} // DEFAULT_URL vide : écran de config pour l'admin
-  show('scr-login'); renderLoginInfo();
-  api('getState').then(d=>{
-    STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[]};
-    renderLoginInfoAll();
+  /* ---------- Code de fête (mot de passe défini par l'admin, stocké dans le Sheet) ---------- */
+  function proceedToLogin(){
+    $('cardCode').style.display='none'; $('cardNames').style.display='block';
+    show('scr-login'); renderLoginInfo();
     const saved=localStorage.getItem(LS_ME);
     if(saved){try{const m=JSON.parse(saved); const p=STATE.players.find(x=>normalizeName(x.nom)===normalizeName(m.name)); if(p){ME={name:p.nom,role:p.role}; enterGame()}}catch(_){}}
-  }).catch(()=>{renderLoginInfo(); $('loginInfo').innerHTML='❌ Serveur injoable — <a href="#" id="lkCfg" style="color:var(--ice)">vérifier l\'URL</a>';
-    const lk=$('lkCfg'); if(lk)lk.onclick=e=>{e.preventDefault(); showCfg('login')}});
+  }
+  function connect(url){
+    SCRIPT_URL=url; localStorage.setItem(LS_URL,url); $('sheetLink').href=url;
+    show('scr-login');
+    api('getState').then(d=>{
+      STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[],partyCode:d.partyCode||''};
+      const need=normalizeCode(STATE.partyCode);
+      const have=normalizeCode(localStorage.getItem(LS_CODE)||'');
+      if(need&&have!==need){showCodeGate(); return} // l'admin a activé/ changé le code
+      proceedToLogin();
+    }).catch(()=>{renderLoginInfo(); $('loginInfo').innerHTML='❌ Serveur injoable — <a href="#" id="lkCfg" style="color:var(--ice)">vérifier la connexion</a>';
+      const lk=$('lkCfg'); if(lk)lk.onclick=e=>{e.preventDefault(); showCfg('login')}});
+  }
+  function showCodeGate(){
+    $('cardNames').style.display='none'; $('cardCode').style.display='block';
+    $('btnCode').disabled=false; $('codeInfo').textContent=''; $('inCode').value=''; // état propre à chaque affichage
+    show('scr-login');
+    const lk=$('lkCodeCfg'); if(lk)lk.onclick=e=>{e.preventDefault(); showCfg('login')};
+    setTimeout(()=>$('inCode').focus(),300);
+  }
+  async function submitCode(){
+    const code=normalizeCode($('inCode').value);
+    if(!code)return;
+    $('btnCode').disabled=true; $('codeInfo').textContent='⏳ Connexion à la cabane…';
+    const url=SCRIPT_URL||DEFAULT_URL||(PARTY_CODES[code]||'').trim();
+    if(!url){
+      $('codeInfo').textContent='❌ Aucun serveur connu — passe par ⚙️ config (admin)';
+      $('btnCode').disabled=false; return;
+    }
+    const old=SCRIPT_URL; SCRIPT_URL=url;
+    try{
+      const d=await api('getState');
+      const need=normalizeName(d.partyCode||'');
+      if(need&&code!==need){ // mauvais mot de passe : on ne connecte pas
+        SCRIPT_URL=old;
+        $('codeInfo').textContent='❌ Code incorrect — demande-le à l\'organisateur 🎅';
+        $('btnCode').disabled=false; return;
+      }
+      localStorage.setItem(LS_CODE,code);
+      connect(url);
+      toast('Bienvenue dans la cabane ! 🎉');
+    }catch(e){
+      SCRIPT_URL=old;
+      $('codeInfo').textContent='❌ Serveur injoable — réessaie dans un instant';
+      $('btnCode').disabled=false;
+    }
+  }
+  $('btnCode').onclick=submitCode;
+  $('inCode').addEventListener('keydown',e=>{if(e.key==='Enter')submitCode()});
+
+  if(!SCRIPT_URL){
+    if(DEFAULT_URL){connect(DEFAULT_URL)}
+    else if(Object.keys(PARTY_CODES).length){showCodeGate()} // le code résoudra l'URL
+    else{showCfg('login')} // mode admin : écran de config
+    return;
+  }
+  connect(SCRIPT_URL);
 }
 document.addEventListener('DOMContentLoaded',boot);
 </script>
