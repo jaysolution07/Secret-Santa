@@ -201,7 +201,6 @@
     <span id="roleBadge" class="badge-role" style="display:none"></span>
     <a id="sheetLink" class="a-sheet" style="display:none" target="_blank" rel="noopener">📊 Sheet</a>
     <div class="icon-btn" id="btnSound" title="Son">🔊</div>
-    <div class="icon-btn" id="btnCfg" title="Serveur">⚙️</div>
     <div class="icon-btn" id="btnOut" title="Changer de joueur">🚪</div>
   </header>
 
@@ -216,31 +215,12 @@
       <input id="inCode" placeholder="Ex. noel2026" autocomplete="off" maxlength="30" style="text-align:center; font-size:20px; letter-spacing:2px">
       <div id="codeInfo" class="hint" style="margin-top:10px; min-height:20px; text-align:center"></div>
       <button class="btn" id="btnCode" style="margin-top:10px">Entrer dans la cabane 🏕️</button>
-      <p class="hint" style="text-align:center; margin-top:12px">Demande le code à l'organisateur 🎅 · <a href="#" id="lkCodeCfg" style="color:var(--muted)">⚙️ config</a></p>
+      <p class="hint" style="text-align:center; margin-top:12px">Demande le code à l'organisateur 🎅</p>
     </div>
     <div class="card" id="cardNames">
       <label class="f" style="text-align:center; font-size:15px">C'est qui, toi ? 👇 Touche ton prénom :</label>
       <div id="nameGrid" class="name-grid"><div class="hint" style="grid-column:1/-1; text-align:center">⏳ Chargement de la liste du parti…</div></div>
       <div id="loginInfo" class="hint" style="margin-top:12px; min-height:20px; text-align:center"></div>
-    </div>
-  </section>
-
-  <!-- ============ CONFIG ============ -->
-  <section id="scr-cfg" class="screen">
-    <div class="hero"><span class="flake">⚙️</span>
-      <h1>Connexion au serveur<span class="sub">Colle l'URL de ton application web Apps Script</span></h1>
-    </div>
-    <div class="card">
-      <label class="f" for="inUrl">URL de l'app Google Apps Script</label>
-      <input id="inUrl" placeholder="https://script.google.com/macros/s/AKfy…/exec" autocomplete="off" spellcheck="false">
-      <div id="cfgInfo" class="hint" style="margin-top:10px; min-height:20px"></div>
-      <button class="btn green" id="btnCfgSave">Valider et enregistrer ✅</button>
-      <p class="hint" style="margin-top:14px">
-        1️⃣ Crée un Google Sheet · 2️⃣ <b>Extensions → Apps Script</b> · 3️⃣ colle le code <code>Code.gs</code> ·
-        4️⃣ <b>Déployer → Application web</b> (accès : tous) · 5️⃣ copie l'URL <code>/exec</code> ici. Voir README.md.
-      </p>
-      <div class="divider"></div>
-      <button class="btn ghost" id="btnCfgBack">← Retour</button>
     </div>
   </section>
 
@@ -354,14 +334,12 @@
    N'importe qui qui ouvre ce fichier (ou ta page GitHub Pages) arrive
    directement sur le portail : code de fête (si l'admin en active un)
    puis grille de prénoms. Aucune configuration nécessaire.               */
+/* 🎯 SERVEUR : l'URL est intégrée en dur dans le fichier. Rien à configurer,
+   aucun écran technique — les invités arrivent directement sur le portail.   */
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycby5LDig-70DyjOhIVntPku8sGhz5gcy4H5YQJwbXgu8IeXnd55dGAf3ZPBVdX_LLqeK4Q/exec';
-const PARTY_CODES={
-  // 'noel2026' : 'https://script.google.com/macros/s/AKfycb…/exec',
-  // 'familledavoine' : 'https://script.google.com/macros/s/…/exec',
-};
 
-const LS_URL='pnc_script_url', LS_ME='pnc_me', LS_SOUND='pnc_sound', LS_CODE='pnc_code';
-let SCRIPT_URL=DEFAULT_URL||localStorage.getItem(LS_URL)||'';
+const LS_ME='pnc_me', LS_SOUND='pnc_sound', LS_CODE='pnc_code';
+const SCRIPT_URL=DEFAULT_URL;
 let ME=null, STATE={players:[],draws:[],rules:[],partyCode:''}, WHEEL_READY=false, BUSY=false;
 
 const $=id=>document.getElementById(id);
@@ -477,7 +455,7 @@ function renderGame(){
     ?'<div class="hint">Tu as déjà tiré ton personnage 🎁 — garde le secret ! <b style="color:var(--gold)">→ '+esc(my.personnage)+'</b> (scroll en bas pour revoir)</div>'
     :'🎁 Tu n\'as <b>pas encore</b> ton personnage secret. Une seule chance : la roue décide !';
   $('btnSpin').disabled=!canSpin;
-  $('wheelHint').textContent=my?'La roue a déjà parlé pour toi ✨':(BUSY?'La roue tourne…':'Prêt ? La roue montre tout le monde : si elle s\'arrête sur un nom déjà pris, le Père Noël rechoisit en secret 🤫');
+  $('wheelHint').textContent=my?'La roue a déjà parlé pour toi ✨':(BUSY?'La roue tourne…':'Prêt ? La roue montre tout le monde, et elle s\'arrête toujours sur un nom de disponible 🎯');
 
   /* résultat (re-consultable) */
   const cr=$('cardResult');
@@ -536,8 +514,10 @@ function buildWheel(){
   const me=ME?normalizeName(ME.name):'';
   /* MYSTÈRE PRÉSERVÉ : la roue affiche TOUJOURS tous les joueurs (sauf soi-même),
      même ceux déjà tirés ou bloqués par une règle — sinon, en voyant la roue
-     rétrécir, on devinerait qui a déjà été pioché. Si la roue s'arrête sur un
-     nom invalide, le serveur rechoisit et la roue se recale discrètement. */
+     rétrécir, on devinerait qui a déjà été pioché. En revanche la roue ne
+     s'arrête QUE sur un nom encore valable : le gagnant est tiré au hasard
+     AVANT le lancer parmi les noms non pris / non interdits, puis la physique
+     est réglée pour freiner pile sur son segment — l'arrêt paraît 100 % aléatoire. */
   const items=STATE.players.filter(p=>normalizeName(p.nom)!==me)
     .map(p=>avatarFor(p.nom)+' '+p.nom);
   if(!items.length){const cv=$('wheel'); const ctx=cv.getContext('2d'); cv.width=cv.height=0; WHEEL.items=[]; return}
@@ -567,29 +547,42 @@ function drawWheel(items){
   }
   ctx.beginPath(); ctx.arc(cx,cy,R-3,0,7); ctx.lineWidth=6; ctx.strokeStyle='#0e2247'; ctx.stroke();
 }
+/* Rotation pilotée par le TEMPS (et non par image) : angle(t) = départ + total·easeOutCubic(t).
+   → atterrissage EXACT sur le gagnant, durée identique sur 60 Hz comme 120 Hz,
+     décélération douce et naturelle jusqu'à l'immobilité complète. */
 function spinLoop(){
   if(!WHEEL.spinning)return;
-  WHEEL.vel*=WHEEL.fric;
-  if(performance.now()<SPIN_MIN){
-    if(WHEEL.vel<0.025)WHEEL.vel=0.025;          // la roue tourne au moins jusqu'au temps minimum
-  }else if(!WHEEL.stopping&&WHEEL.vel<0.025){
-    WHEEL.stopping=true; WHEEL.fric=0.965;        // phase d'arrêt naturel (~1 s)
+  const t=(performance.now()-WHEEL.t0)/WHEEL.durMs;
+  if(t>=1){
+    WHEEL.spin=WHEEL.finalSpin; drawWheel(WHEEL.items); // pose EXACTE sur le segment gagnant
+    WHEEL.spinning=false; onWheelStopped(); return;
   }
-  WHEEL.spin+=WHEEL.vel;
+  WHEEL.spin=WHEEL.start0+WHEEL.total*(1-Math.pow(1-t,3)); // easeOutCubic
   const n=WHEEL.items.length,a0=(Math.PI*2)/n;
   const ptr=Math.PI*1.5; const k=Math.floor(((ptr-WHEEL.spin)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)/a0);
   if(k!==WHEEL.lastK){WHEEL.lastK=k; tick()}
   drawWheel(WHEEL.items);
-  if(WHEEL.vel<0.0035&&performance.now()>=SPIN_MIN){WHEEL.spinning=false; onWheelStopped(); return}
   requestAnimationFrame(spinLoop);
 }
-let SPIN_MIN=0;
-function startSpin(minMs){
+function startSpin(targetIdx){
   if(WHEEL.spinning||BUSY)return;
+  const n=WHEEL.items.length; if(!n)return;
+  const a0=(Math.PI*2)/n, ptr=Math.PI*1.5;
+  // angle final voulu : l'aiguille (en haut) dans le segment gagnant —
+  // décalage aléatoire à l'intérieur pour un arrêt 100 % naturel (jamais pile au centre)
+  const jitter=(Math.random()-0.5)*a0*0.6;
+  const targetMod=(((ptr-targetIdx*a0-a0/2+jitter)%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+  const curMod=((WHEEL.spin%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+  const extraTurns=(2+Math.floor(Math.random()*3))*Math.PI*2; // 2 à 4 tours ENTIERS (un demi-tour décalerait l'arrêt !)
+  const total=(((targetMod-curMod)%(Math.PI*2))+Math.PI*2)%(Math.PI*2)+extraTurns;
+  WHEEL.start0=WHEEL.spin;
+  WHEEL.total=total;
+  WHEEL.finalSpin=WHEEL.spin+total;
+  WHEEL.durMs=3400+Math.random()*1600;                   // 3,4 à 5 s de rotation
+  WHEEL.t0=performance.now();
+  WHEEL.lastK=-1;
   WHEEL.spinning=true; BUSY=true; $('btnSpin').disabled=true;
   $('wheelBox').classList.add('shake'); setTimeout(()=>$('wheelBox').classList.remove('shake'),500);
-  WHEEL.vel=0.32+Math.random()*0.10; WHEEL.fric=0.984; WHEEL.lastK=-1; WHEEL.stopping=false;
-  SPIN_MIN=performance.now()+minMs;
   spinLoop();
 }
 function winnerFromAngle(){
@@ -601,29 +594,68 @@ function winnerFromAngle(){
   return STATE.players.find(p=>normalizeName(p.nom)===normalizeName(name))||STATE.players.find(p=>p.nom===name)||{nom:name,role:'Joueur'};
 }
 
+/* Cibles que le serveur acceptera (miroir de validTargets_ dans Code.gs) :
+   pas soi-même, pas un nom déjà tiré, pas bloqué par une règle admin. */
+function wheelBlockedMap_(){
+  const b={};
+  STATE.rules.forEach(r=>{const a=normalizeName(r.qui),c=normalizeName(r.exclut);b[a<c?a+'|'+c:c+'|'+a]=true});
+  return b;
+}
+function pickValidTarget(){
+  const meN=normalizeName(ME.name);
+  const pk=(x,y)=>{x=normalizeName(x);y=normalizeName(y);return x<y?x+'|'+y:y+'|'+x}; // clé TRIÉE comme key2_ côté serveur
+  const taken={}; STATE.draws.forEach(d=>taken[normalizeName(d.personnage)]=true);
+  const blocked=wheelBlockedMap_();
+  const cands=[];
+  WHEEL.items.forEach((lab,idx)=>{
+    const nm=lab.replace(/^\S+\s+/,''), k=normalizeName(nm);
+    if(taken[k]||blocked[pk(ME.name,nm)])return;
+    cands.push({idx,nom:nm});
+  });
+  if(!cands.length)return null;
+  /* garde-fou miroir du serveur : si je suis l'AVANT-DERNIER tireur, mon choix
+     ne doit pas priver le DERNIER joueur de sa seule cible valide. */
+  const remainingAfter=STATE.players.length-STATE.draws.length-1;
+  if(remainingAfter===1){
+    const drawn={}; STATE.draws.forEach(d=>drawn[normalizeName(d.joueur)]=true);
+    let last=null; STATE.players.forEach(p=>{const n=normalizeName(p.nom); if(!last&&n!==meN&&!drawn[n])last=n});
+    if(last){
+      const ok=c=>{
+        const t2=Object.assign({},taken); t2[normalizeName(c.nom)]=true;
+        return STATE.players.some(p=>{const n=normalizeName(p.nom);
+          if(n===last||t2[n])return false;
+          if(blocked[pk(last,p.nom)])return false;
+          return true});
+      };
+      const guarded=cands.filter(ok);
+      if(guarded.length)return guarded[Math.floor(Math.random()*guarded.length)];
+    }
+  }
+  return cands[Math.floor(Math.random()*cands.length)];
+}
 function doSpin(){
   const my=STATE.draws.find(d=>normalizeName(d.joueur)===normalizeName(ME.name));
   if(my||WHEEL.spinning||BUSY)return;
   if(STATE.players.length<2)return toast('Il faut au moins 2 joueurs !',true);
+  const t=pickValidTarget();
+  if(!t)return toast('Plus aucun choix valide pour toi — parle à l\'admin 🎅',true);
   clickSnd();
-  startSpin(3400+Math.random()*1600); // la roue s'arrête toute seule puis valide côté serveur
+  WHEEL.forced=t.nom;   // gagnant choisi AVANT le lancer, parmi les noms valides
+  startSpin(t.idx);     // la physique fera s'arrêter la roue pile sur lui
 }
 async function onWheelStopped(){
-  const pick=winnerFromAngle();
+  const forced=WHEEL.forced; WHEEL.forced=null;   // nom visé par la roue (déjà valide au moment du lancer)
+  const pick=winnerFromAngle(); if(forced)pick.nom=forced; // double sécurité : forcer le nom visé
   try{
     const d=await api('draw',{joueur:ME.name, choix:pick.nom});
-    if(d.choix&&normalizeName(d.choix)!==normalizeName(pick.nom)){
-      // le serveur a re-choisi (choix devenu invalide entre-temps) : on recale la roue sur le gagnant officiel
-      const nm=d.choix; await new Promise(r=>setTimeout(r,400));
-      WHEEL.items=['⭐ '+nm].concat(WHEEL.items.filter(x=>normalizeName(x.replace(/^\S+\s+/,''))!==normalizeName(pick.nom)));
-      drawWheel(WHEEL.items);
-    }
     // garde-fou : on refuse toute réponse serveur qui nous assignerait notre propre nom
     const finalChoice=normalizeName(d.choix||'')===normalizeName(ME.name)?null:(d.choix||pick.nom);
-    const rec={joueur:ME.name,personnage:finalChoice,recale:d.choix&&normalizeName(d.choix)!==normalizeName(pick.nom)};
-    if(!rec.personnage){ // réponse inexploitable : resync complet, la feuille fait foi
+    if(!finalChoice){ // réponse inexploitable : resync complet, la feuille fait foi
       BUSY=false; await fullReload(); return;
     }
+    // Course improbable : un autre joueur a visé le même nom PENDANT la rotation.
+    // Le serveur a départagé sous LockService — on affiche son choix officiel.
+    const rec={joueur:ME.name,personnage:finalChoice,recale:normalizeName(finalChoice)!==normalizeName(pick.nom)};
     STATE.draws.push(rec); STATE.draws.sort((a,b)=>normalizeName(a.joueur).localeCompare(normalizeName(b.joueur)));
     finishSpin(true,rec);
   }catch(e){
@@ -641,7 +673,7 @@ function finishSpin(win=true,rec){
       '<div class="name">'+esc(rec.joueur)+'</div><div class="hint">Tu offres ton cadeau à…</div>'+
       '<div class="name" style="font-size:clamp(34px,9vw,52px)">'+esc(rec.personnage)+'</div>'+
       '<div class="phrase">« '+esc(PHRASES[Math.floor(Math.random()*PHRASES.length)])+' »</div>'+
-      (rec.recale?'<div class="hint" style="margin-top:10px; font-size:12px">🎡 La roue s\'était arrêtée sur un nom déjà pris — le Père Noël a rechoisi en secret.</div>':'')+
+      (rec.recale?'<div class="hint" style="margin-top:10px; font-size:12px">🎡 Deux Pères Noël visaient le même cadeau — le serveur a départagé en secret.</div>':'')+
       '<button class="btn green" style="margin-top:18px" id="mOk">C\'est noté, chut ! 🤫</button></div>';
     document.body.appendChild(ov);
     ov.querySelector('#mOk').onclick=()=>{clickSnd(); ov.remove()};
@@ -713,40 +745,9 @@ function bindAdmin(){
   }
 }
 
-/* ---------- config ---------- */
-function showCfg(back){
-  $('scr-cfg').dataset.back=back||'login'; $('inUrl').value=SCRIPT_URL;
-  $('cfgInfo').textContent=SCRIPT_URL?'URL enregistrée — tu peux la remplacer ou revalider.':'';
-  show('scr-cfg'); $('topbar').style.display='none';
-}
-function validateUrl(u){
-  try{const x=new URL(u); if(!x.hostname.endsWith('script.google.com')&&!x.hostname.endsWith('script.googleusercontent.com'))return false; return u.indexOf('/macros/s/')>=0&&u.indexOf('/exec')>=0}catch(_){return false}
-}
-async function cfgSave(){
-  const u=$('inUrl').value.trim();
-  if(!u)return toast('Colle une URL',true);
-  $('btnCfgSave').disabled=true; $('cfgInfo').textContent='⏳ Vérification du serveur…';
-  const old=SCRIPT_URL; SCRIPT_URL=u.replace(/[?&#].*$/,'');
-  try{
-    const d=await api('getState');
-    STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[],partyCode:d.partyCode||''};
-    localStorage.setItem(LS_URL,SCRIPT_URL); $('sheetLink').href=SCRIPT_URL;
-    toast('Connecté ! '+STATE.players.length+' joueur(s) sur le Sheet 🎉');
-    $('cardCode').style.display='none'; $('cardNames').style.display='block';
-    show('scr-login'); renderLoginInfo();
-  }catch(e){
-    SCRIPT_URL=old; $('cfgInfo').textContent='❌ '+((e&&e.message)||'Serveur injoable'); toast('Connexion échouée',true);
-  }
-  $('btnCfgSave').disabled=false;
-}
-
 /* ---------- boot ---------- */
-function renderLoginInfoAll(){renderLoginInfo()}
 async function boot(){
   $('btnSound').textContent=SOUND?'🔊':'🔇';
-  $('btnCfg').onclick=()=>showCfg(ME?'game':'login');
-  $('btnCfgBack').onclick=()=>{const b=$('scr-cfg').dataset.back; if(b==='game'&&ME){show('scr-game'); $('topbar').style.display='flex'} else {show('scr-login'); renderLoginInfoAll()}};
-  $('btnCfgSave').onclick=cfgSave;
   $('btnSound').onclick=()=>{SOUND=!SOUND; localStorage.setItem(LS_SOUND,SOUND?'1':'0'); $('btnSound').textContent=SOUND?'🔊':'🔇'; if(SOUND)clickSnd()};
   $('btnOut').onclick=()=>{clickSnd(); doLogout()};
   const grid=$('nameGrid');
@@ -772,47 +773,37 @@ async function boot(){
     if(saved){try{const m=JSON.parse(saved); const p=STATE.players.find(x=>normalizeName(x.nom)===normalizeName(m.name)); if(p){ME={name:p.nom,role:p.role}; enterGame()}}catch(_){}}
   }
   function connect(url){
-    if(url){SCRIPT_URL=url; localStorage.setItem(LS_URL,url); $('sheetLink').href=url;}
     show('scr-login');
     api('getState').then(d=>{
       STATE={players:d.players||[],draws:d.draws||[],rules:d.rules||[],partyCode:d.partyCode||''};
       const need=normalizeCode(STATE.partyCode);
       const have=normalizeCode(localStorage.getItem(LS_CODE)||'');
-      if(need&&have!==need){showCodeGate(); return} // l'admin a activé/ changé le code
+      if(need&&have!==need){showCodeGate(); return} // l'admin a activé/changé le code
       proceedToLogin();
-    }).catch(()=>{renderLoginInfo(); $('loginInfo').innerHTML='❌ Serveur injoable — <a href="#" id="lkCfg" style="color:var(--ice)">vérifier la connexion</a>';
-      const lk=$('lkCfg'); if(lk)lk.onclick=e=>{e.preventDefault(); showCfg('login')}});
+    }).catch(()=>{renderLoginInfo(); $('loginInfo').innerHTML='❌ Serveur injoable — <a href="#" id="lkRetry" style="color:var(--ice)">réessayer</a>';
+      const lk=$('lkRetry'); if(lk)lk.onclick=e=>{e.preventDefault(); $('loginInfo').textContent='⏳ Reconnexion…'; connect(url)}});
   }
   function showCodeGate(){
     $('cardNames').style.display='none'; $('cardCode').style.display='block';
     $('btnCode').disabled=false; $('codeInfo').textContent=''; $('inCode').value=''; // état propre à chaque affichage
     show('scr-login');
-    const lk=$('lkCodeCfg'); if(lk)lk.onclick=e=>{e.preventDefault(); showCfg('login')};
     setTimeout(()=>$('inCode').focus(),300);
   }
   async function submitCode(){
     const code=normalizeCode($('inCode').value);
     if(!code)return;
     $('btnCode').disabled=true; $('codeInfo').textContent='⏳ Connexion à la cabane…';
-    const url=SCRIPT_URL||DEFAULT_URL||(PARTY_CODES[code]||'').trim();
-    if(!url&&!HOSTED){
-      $('codeInfo').textContent='❌ Aucun serveur connu — passe par ⚙️ config (admin)';
-      $('btnCode').disabled=false; return;
-    }
-    const old=SCRIPT_URL; if(url)SCRIPT_URL=url;
     try{
       const d=await api('getState');
       const need=normalizeCode(d.partyCode||'');
       if(need&&code!==need){ // mauvais mot de passe : on ne connecte pas
-        if(url)SCRIPT_URL=old;
         $('codeInfo').textContent='❌ Code incorrect — demande-le à l\'organisateur 🎅';
         $('btnCode').disabled=false; return;
       }
       localStorage.setItem(LS_CODE,code);
-      connect(url||SCRIPT_URL);
+      connect(SCRIPT_URL);
       toast('Bienvenue dans la cabane ! 🎉');
     }catch(e){
-      if(url)SCRIPT_URL=old;
       $('codeInfo').textContent='❌ Serveur injoable — réessaie dans un instant';
       $('btnCode').disabled=false;
     }
@@ -822,30 +813,8 @@ async function boot(){
 
   /* 🎯 MODE HÉBERGÉ : la page est servie PAR Apps Script (lien /exec partagé).
      Aucune config : on connecte tout de suite — le portail (code ou grille) s'affiche. */
-  if(HOSTED){
-    $('btnCfg').style.display='none'; // rien à configurer pour les invités
-    connect(null); return;
-  }
-  /* 🔗 PARTAGE : si l'URL de la page contient ?s=<serveur encodé> (lien généré
-     par l'admin), on s'y connecte automatiquement — l'invité ne configure rien. */
-  try{
-    const qs=new URLSearchParams(location.search);
-    const s=qs.get('s');
-    if(s){
-      const url=decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
-      if(/^https:\/\/script\.googleusercontent\.com|^https:\/\/script\.google\.com/.test(url)){
-        localStorage.setItem(LS_URL,url);
-        SCRIPT_URL=url;
-      }
-    }
-  }catch(_){}
-  if(!SCRIPT_URL){
-    if(DEFAULT_URL){connect(DEFAULT_URL)}
-    else if(Object.keys(PARTY_CODES).length){showCodeGate()} // le code résoudra l'URL
-    else{showCfg('login')} // mode admin : écran de config
-    return;
-  }
-  connect(SCRIPT_URL);
+  if(HOSTED){connect(null); return}
+  connect(SCRIPT_URL); // serveur intégré en dur — le portail s'affiche direct
 }
 document.addEventListener('DOMContentLoaded',boot);
 </script>
