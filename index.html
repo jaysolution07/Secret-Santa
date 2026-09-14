@@ -123,6 +123,9 @@
     border-top:30px solid var(--red); filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));
   }
   .pointer::after{content:""; position:absolute; top:-30px; left:-7px; width:14px; height:14px; border-radius:50%; background:#fff}
+  .pointer.wait::after{background:var(--gold); animation:pulse .7s ease-in-out infinite}
+  .pointer.err::after{background:var(--red)}
+  @keyframes pulse{0%,100%{transform:scale(1); opacity:1}50%{transform:scale(1.6); opacity:.5}}
   #wheel{width:100%; height:100%; display:block; filter:drop-shadow(0 14px 24px rgba(0,0,0,.45))}
   .shake{animation:shake .5s} @keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-2deg)}40%{transform:rotate(2deg)}60%{transform:rotate(-1.5deg)}80%{transform:rotate(1.5deg)}}
   .progress-line{height:8px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; margin-top:10px}
@@ -582,6 +585,7 @@ function startSpin(targetIdx){
   WHEEL.t0=performance.now();
   WHEEL.lastK=-1;
   WHEEL.spinning=true; BUSY=true; $('btnSpin').disabled=true;
+  const ptrEl=document.querySelector('#wheelBox .pointer'); if(ptrEl){ptrEl.classList.add('wait'); ptrEl.classList.remove('err')} // 🟡 réservation en cours
   $('wheelBox').classList.add('shake'); setTimeout(()=>$('wheelBox').classList.remove('shake'),500);
   spinLoop();
 }
@@ -640,29 +644,58 @@ function doSpin(){
   const t=pickValidTarget();
   if(!t)return toast('Plus aucun choix valide pour toi — parle à l\'admin 🎅',true);
   clickSnd();
-  WHEEL.forced=t.nom;   // gagnant choisi AVANT le lancer, parmi les noms valides
-  startSpin(t.idx);     // la physique fera s'arrêter la roue pile sur lui
+  /* Le gagnant est choisi AVANT le lancer (parmi les noms valides) → on réserve
+     le tirage SUR LE SERVEUR TOUT DE SUITE. La confirmation arrive généralement
+     PENDANT la rotation (3,4–5 s) : à l'arrêt de la roue, la révélation est
+     INSTANTANÉE. La roue s'arrête visuellement sur le nom réservé ; si le
+     serveur a départagé une course, la roue est recolérée en silence. */
+  WHEEL.confirming=true; WHEEL.forced=null; WHEEL.err=null; WHEEL.res=null;
+  startSpin(t.idx);
+  api('draw',{joueur:ME.name, choix:t.nom}).then(d=>{
+      // garde-fou : on refuse toute réponse serveur qui nous assignerait notre propre nom
+      const finalChoice=(d.choix&&normalizeName(d.choix)!==normalizeName(ME.name))?d.choix:null;
+      const rec=()=>({joueur:ME.name,personnage:finalChoice,recale:normalizeName(finalChoice)!==normalizeName(t.nom)});
+      if(WHEEL.confirming&&WHEEL.spinning){ // roue ENCORE en rotation : la révélation attendra son arrêt
+        if(finalChoice)WHEEL.res=rec();
+        else WHEEL.err='Réponse inexploitable du serveur';
+        WHEEL.confirming=false;
+      }else{ // roue déjà arrêtée (réponse plus lente que la rotation) : révèle MAINTENANT
+        WHEEL.confirming=false;
+        if(finalChoice)revealDraw(rec());
+        else{WHEEL.spinning=false;BUSY=false;renderGame();fullReload().catch(()=>{});toast('Synchronisation… réessaie 🔄',true)}
+      }
+    }).catch(e=>{
+      const msg=(e&&e.message)||'Erreur du tirage';
+      if(WHEEL.confirming&&WHEEL.spinning){WHEEL.err=msg;WHEEL.confirming=false}
+      else{ // roue déjà arrêtée : rendre la main immédiatement
+        WHEEL.confirming=false;WHEEL.spinning=false;BUSY=false;renderGame();
+        const pe=document.querySelector('#wheelBox .pointer'); if(pe)pe.classList.remove('wait');
+        toast(msg,true); if(/déjà tiré|already/i.test(msg))fullReload().catch(()=>{});
+      }
+    });
 }
 async function onWheelStopped(){
-  const forced=WHEEL.forced; WHEEL.forced=null;   // nom visé par la roue (déjà valide au moment du lancer)
-  const pick=winnerFromAngle(); if(forced)pick.nom=forced; // double sécurité : forcer le nom visé
-  try{
-    const d=await api('draw',{joueur:ME.name, choix:pick.nom});
-    // garde-fou : on refuse toute réponse serveur qui nous assignerait notre propre nom
-    const finalChoice=normalizeName(d.choix||'')===normalizeName(ME.name)?null:(d.choix||pick.nom);
-    if(!finalChoice){ // réponse inexploitable : resync complet, la feuille fait foi
-      BUSY=false; await fullReload(); return;
-    }
-    // Course improbable : un autre joueur a visé le même nom PENDANT la rotation.
-    // Le serveur a départagé sous LockService — on affiche son choix officiel.
-    const rec={joueur:ME.name,personnage:finalChoice,recale:normalizeName(finalChoice)!==normalizeName(pick.nom)};
-    STATE.draws.push(rec); STATE.draws.sort((a,b)=>normalizeName(a.joueur).localeCompare(normalizeName(b.joueur)));
-    finishSpin(true,rec);
-  }catch(e){
-    BUSY=false; renderGame();
-    toast((e&&e.message)||'Erreur du tirage',true);
-    if(/déjà tiré|already/i.test((e&&e.message)||'')){fullReload().catch(()=>{})}
+  // Le tirage a été réservé au DÉBUT du lancer : rien à attendre du serveur ici.
+  if(WHEEL.confirming)return;             // réponse pas encore arrivée → révèle dès réception
+  if(WHEEL.err){                           // échec pendant la rotation
+    WHEEL.spinning=false;BUSY=false;renderGame();
+    const pe=document.querySelector('#wheelBox .pointer'); if(pe){pe.classList.remove('wait'); pe.classList.add('err')}
+    const msg=WHEEL.err; WHEEL.err=null; toast(msg,true);
+    if(/déjà tiré|already/i.test(msg))fullReload().catch(()=>{});
+    return;
   }
+  const res=WHEEL.res; WHEEL.res=null; WHEEL.forced=null;
+  if(res)revealDraw(res);                  // 🔥 révélation INSTANTANÉE
+  else{ // cas ultra rare (réponse perdue) : resync complet, la feuille fait foi
+    WHEEL.spinning=false;BUSY=false;renderGame();fullReload().catch(()=>{});toast('Synchronisation… réessaie 🔄',true);
+  }
+}
+/* Révèle le résultat : met à jour l'état local PUIS affiche la fenêtre festive. */
+function revealDraw(rec){
+  WHEEL.spinning=false;
+  const ptrEl=document.querySelector('#wheelBox .pointer'); if(ptrEl)ptrEl.classList.remove('wait','err');
+  STATE.draws.push(rec); STATE.draws.sort((a,b)=>normalizeName(a.joueur).localeCompare(normalizeName(b.joueur)));
+  finishSpin(true,rec);
 }
 function finishSpin(win=true,rec){
   BUSY=false; fanfare(win); confetti();
