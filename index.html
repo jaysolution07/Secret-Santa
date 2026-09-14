@@ -533,19 +533,41 @@ function drawWheel(items){
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
   const R=size/2, cx=size/2, cy=size/2, n=items.length, a0=(Math.PI*2)/n;
   ctx.clearRect(0,0,size,size);
+  /* PASSE 1 : d'abord TOUS les secteurs (couleur + contour). Avant, chaque secteur
+     était repeint par le suivant → les emojis des longs noms (ancrés par rapport
+     à la largeur du nom) se retrouvaient recouverts par les secteurs voisins. */
   for(let i=0;i<n;i++){
     const a=WHEEL.spin+i*a0;
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R-4,a,a+a0); ctx.closePath();
     ctx.fillStyle=PALETTE[i%PALETTE.length]; ctx.fill();
     ctx.strokeStyle='rgba(10,20,40,.55)'; ctx.lineWidth=2; ctx.stroke();
+  }
+  /* PASSE 2 : ensuite TOUTES les étiquettes — plus rien ne peut les recouvrir.
+     Emoji : taille et position radiale FIXES (même distance du bord sur TOUS les
+     secteurs, près du rim là où l'aiguille désigne le gagnant). Le nom est ensuite
+     ajusté entre l'emoji et le moyeu 🍁 — l'emoji ne plonge plus vers le centre
+     quand le nom est long. */
+  for(let i=0;i<n;i++){
+    const a=WHEEL.spin+i*a0;
     ctx.save(); ctx.translate(cx,cy); ctx.rotate(a+a0/2);
     ctx.textAlign='right'; ctx.fillStyle='#fff';
     ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=4;
     const label=items[i], namePart=label.replace(/^\S+\s+/,'');
+    const emoji=label.split(' ')[0];
+    const edge=R-16;
+    const eFont=n>12?14:16; ctx.font=eFont+'px serif';
+    const eW=ctx.measureText(emoji).width;
+    const eC=edge-eW/2-2;                          // centre radial de l'emoji (fixe)
+    const nameX=eC-eW/2-10;                        // fin du nom (textAlign right) — gap confortable
+    const innerLimit=Math.max(R*0.26,48);          // ne pas passer sous le moyeu 🍁
     let fs=n>12?12:n>8?14:16; ctx.font='600 '+fs+'px Fredoka, sans-serif';
-    if(ctx.measureText(namePart).width>R-64){fs=Math.max(10,fs*(R-64)/ctx.measureText(namePart).width); ctx.font='600 '+fs+'px Fredoka, sans-serif'}
-    ctx.fillText(namePart,R-46,5);
-    ctx.shadowBlur=0; ctx.font=(fs+5)+'px serif'; ctx.fillText(label.split(' ')[0],R-46-(ctx.measureText(namePart).width+12),5);
+    const nW0=ctx.measureText(namePart).width;
+    const maxNW=nameX-innerLimit-4;
+    if(nW0>maxNW){fs=Math.max(9,fs*maxNW/nW0); ctx.font='600 '+fs+'px Fredoka, sans-serif'}
+    ctx.fillText(namePart,nameX,5);
+    ctx.textAlign='center'; ctx.font=eFont+'px serif';
+    ctx.fillText(emoji,eC,5);
+    ctx.shadowBlur=0;
     ctx.restore();
   }
   ctx.beginPath(); ctx.arc(cx,cy,R-3,0,7); ctx.lineWidth=6; ctx.strokeStyle='#0e2247'; ctx.stroke();
